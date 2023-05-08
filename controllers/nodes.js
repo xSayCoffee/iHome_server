@@ -55,19 +55,24 @@ client.on('connect', () => {
 });
 
 const updateRelay = async (relayNode, message) => {
-    await Channels.findByIdAndUpdate(relayNode.channels[0], {
+    const channels1 = await Channels.findByIdAndUpdate(relayNode.channels[0], {
         state: message.status1 === 'ON' ? true : false,
     });
-    await Channels.findByIdAndUpdate(relayNode.channels[1], {
+    const channels2 = await Channels.findByIdAndUpdate(relayNode.channels[1], {
         state: message.status2 === 'ON' ? true : false,
     });
-    await Channels.findByIdAndUpdate(relayNode.channels[2], {
+    const channels3 = await Channels.findByIdAndUpdate(relayNode.channels[2], {
         state: message.status3 === 'ON' ? true : false,
     });
     changeState = true;
+
+    _io.emit(`changetele/${channels1._id}`, channels1);
+    _io.emit(`changetele/${channels2._id}`, channels2);
+    _io.emit(`changetele/${channels3._id}`, channels3);
 };
 
 const updateADE = async (relayNode, message) => {
+    // console.log(message);
     const channel = await Channels.findById(relayNode.channels[0]);
 
     if (
@@ -75,10 +80,12 @@ const updateADE = async (relayNode, message) => {
         (channel?.state === false && message?.status === 'ON')
     ) {
         changeState = true;
-        await Channels.findByIdAndUpdate(
+        const channel = await Channels.findByIdAndUpdate(
             { _id: relayNode.channels[0] },
             { state: message?.status === 'ON' ? true : false, isActive: true },
         );
+
+        _io.emit(`changetele/${channel._id}`, channel);
     }
 
     if (message.vrms < 300 && message.irms < 20 && message.power < 1000) {
@@ -89,12 +96,13 @@ const updateADE = async (relayNode, message) => {
             power: message.power,
         });
 
-        await newADE.save();
+        const adeUpdate = await newADE.save();
+        _io.emit(`changeAde/${adeUpdate.address}`, adeUpdate);
     }
 };
 
 const updateSensor = async (relayNode, message) => {
-    await Sensors.findOneAndUpdate(
+    const update = await Sensors.findOneAndUpdate(
         { address: message.dev_addr },
         {
             temp: message.temp,
@@ -103,6 +111,7 @@ const updateSensor = async (relayNode, message) => {
             isActive: true,
         },
     );
+    _io.emit(`changeSensor/${update.address}`, update);
 };
 
 const mqttHandle = async (topic, payload) => {

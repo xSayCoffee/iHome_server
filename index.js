@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import morgan from 'morgan';
 import multer from 'multer';
 import path from 'path';
+import { Server } from 'socket.io';
 import { fileURLToPath } from 'url';
 import { register } from './controllers/auth.js';
 import adesRoutes from './routes/ades.js';
@@ -17,8 +18,20 @@ import membersRoutes from './routes/members.js';
 import nodesRoutes from './routes/nodes.js';
 import roomsRoutes from './routes/rooms.js';
 import userRoutes from './routes/users.js';
+import socketService from './services/socket.service.js';
 
 import './controllers/nodes.js';
+
+const directStorage = 'public/assets';
+const corsOptions = {
+    origin: [
+        'http://localhost:3001',
+        'http://localhost:3000',
+        'https://storage.googleapis.com/deathshop-15e27.appspot.com',
+    ],
+    credentials: true,
+    optionSuccessStatus: 200,
+};
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
@@ -33,9 +46,9 @@ app.use(bodyParser.json({ limit: '30mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '30mb', extended: true }));
 app.use(cors());
 app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
+app.use(cors(corsOptions));
 
 /* FILE STORAGE */
-const directStorage = 'public/assets';
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -63,12 +76,26 @@ app.use('/members', membersRoutes);
 
 /* MONGOOSE SETUP */
 const PORT = process.env.PORT || 6001;
+
+const server = app.listen(PORT, () => console.log(`Server Port: ${PORT}`));
+
+const io = new Server(server, {
+    cors: {
+        origin: 'http://localhost:3000',
+        methods: ['GET', 'POST'],
+    },
+});
+
+global._io = io;
+
+global._io.on('connection', socketService.connection);
+
 mongoose
     .connect(process.env.MONGO_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     })
     .then(() => {
-        app.listen(PORT, () => console.log(`Server Port: ${PORT}`));
+        console.log('Connect mongodb success');
     })
     .catch((error) => console.log(`${error} did not connect`));
