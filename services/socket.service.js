@@ -3,7 +3,7 @@ class SocketServices {
     connection(socket) {
         socket.on('disconnect', () => {
             console.log(`User disconnect id is ${socket.id}`);
-        });
+        }); 
 
         // event on here
 

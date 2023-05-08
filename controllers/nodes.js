@@ -195,7 +195,7 @@ export const addNodes = async (req, res) => {
                         channels[i] = channel._id;
                     }
 
-                    const newNode = new Nodes({
+                    const newNode = new Nodes({ 
                         name: 'New Relay',
                         home: id,
                         room: room ? room : '',
