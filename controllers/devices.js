@@ -92,6 +92,7 @@ export const getDevice = async (req, res) => {
                 isActive: channel?.isActive,
                 name: relay.name,
                 address: relay.address,
+                state: channel?.state,
             };
         }
 
