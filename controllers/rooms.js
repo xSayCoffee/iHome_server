@@ -26,7 +26,18 @@ export const getAllRooms = async (req, res) => {
     try {
         const { id } = req.params;
         const rooms = await Rooms.find({ home: id });
-        res.status(200).json(rooms);
+
+        const promises = await rooms.map(async (room) => {
+            const relay = new Promise((resolve, reject) => {
+                resolve(Channels.findById(room.relay));
+            });
+
+            return relay;
+        });
+
+        const relays = await Promise.all(promises);
+
+        res.status(200).json({ rooms, relays });
     } catch (err) {
         res.status(404).json({ message: err.message });
     }

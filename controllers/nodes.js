@@ -81,14 +81,16 @@ const updateADE = async (relayNode, message) => {
         );
     }
 
-    const newADE = new Ades({
-        address: message.dev_addr,
-        irms: message.irms,
-        vrms: message.vrms,
-        power: message.power,
-    });
+    if (message.vrms < 300 && message.irms < 20 && message.power < 1000) {
+        const newADE = new Ades({
+            address: message.dev_addr,
+            irms: message.irms,
+            vrms: message.vrms,
+            power: message.power,
+        });
 
-    await newADE.save();
+        await newADE.save();
+    }
 };
 
 const updateSensor = async (relayNode, message) => {
@@ -456,7 +458,7 @@ export const editNode = async (req, res) => {
 export const getRelay = async (req, res) => {
     try {
         const { id } = req.params;
-        let relay = await Channels.findById(id);
+        const relay = await Channels.findById(id);
 
         res.status(200).json(relay);
     } catch (err) {
